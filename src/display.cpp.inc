@@ -1,0 +1,70 @@
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET -1
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+bool displayConnected = false;
+unsigned long lastDisplayUpdate = 0;
+
+double getPowerSensorVoltage();
+double getPowerSensorCurrent();
+
+void initDisplay() {
+  Serial.print("Display ");
+  // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println("SSD1306 allocation failed or not found");
+    displayConnected = false;
+  } else {
+    Serial.println("SSD1306 OK");
+    displayConnected = true;
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(0, 0);
+    display.println("Booting robot...");
+    display.display();
+  }
+}
+
+void updateDisplay() {
+  if (!displayConnected) return;
+
+  unsigned long now = millis();
+  if (now - lastDisplayUpdate < 500) {
+    return; // update at 2 Hz max
+  }
+  lastDisplayUpdate = now;
+
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 0);
+
+  // Print WiFi IP
+  display.print("IP: ");
+  if (WiFiMode == AP_MODE) {
+    display.println(WiFi.softAPIP());
+  } else {
+    display.println(WiFi.localIP());
+  }
+
+  // Print Power data
+  display.print("V: ");
+  display.print(getPowerSensorVoltage(), 2);
+  display.print("V I: ");
+  display.print(getPowerSensorCurrent(), 2);
+  display.println("A");
+
+  // Print IMU Roll/Pitch
+  display.print("R: ");
+  display.print(IMU_DATA[ROLL], 1);
+  display.print(" P: ");
+  display.println(IMU_DATA[PITCH], 1);
+
+  display.display();
+}
