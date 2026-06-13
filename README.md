@@ -6,10 +6,12 @@ The whole codebase is originally based on [SovGVD/esp32-robot-dog-code](https://
 
 This project is aimed at building a quadruped robot dog driven by an ESP32 microcontroller, utilizing a PCA9685 PWM servo driver to control its 12 joints. The project features an embedded Web UI served over WiFi to control the robot's movements remotely.
 
-**Hardware Architecture & Safety Overhaul**: In the original build that this codebase is based on, the ESP32 logic pins were used to directly drive all 12 servos. That approach is inherently dangerous and unstable. A single MG90S servo can draw upwards of 700mA+ under load or stall conditions, meaning 12 servos could theoretically draw over 8 Amps simultaneously! Attempting to supply or route this kind of current without proper power management will result in severe voltage drops, brownouts, erratic behavior, and can permanently fry the microcontroller. 
+**Hardware Architecture & Safety Overhaul**: In the original Instructables guide ([ESP32 Small Robot Dog](https://www.instructables.com/ESP32-Small-Robot-Dog/)) that this codebase is based on, the developer used the ESP32 logic pins to directly drive all 12 servos, and powered them using 3 Mini360 buck converters. 
+
+That approach is inherently dangerous and unstable. A single MG90S servo can draw upwards of 700mA+ under load or stall conditions. This means 12 servos could theoretically draw over 8 Amps simultaneously! Three small Mini360 buck converters (which are typically rated for 1.8A continuous) are vastly insufficient for this kind of load. Attempting to route this kind of current will result in severe voltage drops, brownouts, erratic behavior, overheating, and can permanently fry the microcontroller. 
 
 To resolve this, our build fundamentally revamps the hardware architecture by introducing:
-1. **A dedicated 300W 20A DC-DC Buck Converter** to safely provide the massive amperage required by 12 servos moving at once.
+1. **A dedicated 300W 20A DC-DC Buck Converter** to safely provide the massive amperage required by 12 servos moving at once. This completely eliminates the bottleneck of using multiple small, underpowered converters.
 2. **A PCA9685 16-Channel PWM Servo Driver** to offload the PWM signal generation from the ESP32 logic pins. This ensures rock-solid signal timing and keeps the high-current servo power lines safely isolated from the sensitive microcontroller circuitry.
 During the development and testing phase, we encountered and fixed several significant issues:
 1. **Web Build Pipeline**: The Node.js build scripts were failing due to outdated dependencies (`primordials` error). We fixed this by rewriting the pipeline to properly minify, gzip, and embed the web assets directly into a C++ header file.
