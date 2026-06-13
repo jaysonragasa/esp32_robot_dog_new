@@ -1,31 +1,26 @@
 #if PWM_CONTROLLER_TYPE == PCA9685
 
+double pwmTicksPerUs = 0;
+
 void initServoHAL() {
   pwm = Adafruit_PWMServoDriver();
   pwm.begin();
   pwm.setOscillatorFrequency(27000000);  // The int.osc. is closer to 27MHz
   pwm.setPWMFreq(SERVO_FREQ);  // This is the maximum PWM frequency of servo
-}
-
-uint16_t angleToPulse(double angleRad) {
-  // TODO, angle expected to be between 0 and 180 deg (0 and PI)
   
-  double pulse = mapf(angleRad, 0, M_PI, 600, 2400);
-  // from Adafruit PWM lib
-  double pulselength;
-  pulselength = 1000000; // 1,000,000 us per second
-
-  // Read prescale
+  // Cache the ticks-per-microsecond multiplier to avoid doing an I2C read inside angleToPulse
+  double pulselength = 1000000.0;
   uint16_t prescale = pwm.readPrescale();
-
-  // Calculate the pulse for PWM based on Equation 1 from the datasheet section
-  // 7.3.5
   prescale += 1;
   pulselength *= prescale;
   pulselength /= pwm.getOscillatorFrequency();
-  pulse /= pulselength;
+  pwmTicksPerUs = 1.0 / pulselength;
+}
 
-  return pulse;
+uint16_t angleToPulse(double angleRad) {
+  // Map angle expected between 0 and PI to pulse width in microseconds
+  double pulse_us = mapf(angleRad, 0, M_PI, SERVO_MIN, SERVO_MAX);
+  return pulse_us * pwmTicksPerUs;
 }
 
 void setLegPWM(leg &_leg)
@@ -37,7 +32,10 @@ void setLegPWM(leg &_leg)
 
 void runServoCalibrate(leg &_leg)
 {
-  // TODO
+  uint16_t pulse = angleToPulse(M_PI_2);
+  pwm.setPWM(_leg.hal.pin.alpha, 0, pulse);
+  pwm.setPWM(_leg.hal.pin.beta,  0, pulse);
+  pwm.setPWM(_leg.hal.pin.gamma, 0, pulse);
 }
 
 
