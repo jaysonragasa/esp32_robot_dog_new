@@ -114,10 +114,14 @@ double cliSetHALTrimRHGamma(double deg) {
 
 // HAL - state
 
-double cliSetHALState(double state)
-{
-  HALEnabled = state == 0 ? false : true;
-  return cliGetHALState(state);
+double cliSetHALState(double state) {
+  if (state == 0.0) {
+    HALEnabled = false;
+  } else {
+    HALEnabled = true;
+    isCalibrating = false;
+  }
+  return cliGetHALState(1);
 }
 
 // Leg angle
@@ -157,6 +161,7 @@ double cliSetAngleRHGamma(double deg) { return _cliSetAngle(legs[LEGRH], GAMMA, 
 // Servo calibration
 double cliSetServoCalib(double i) {
   HALEnabled = false;
+  isCalibrating = true;
   delay(1000); // that it terrible, but we need to wait to make sure HAL disabled
 
   setServoToMiddle();
@@ -166,6 +171,7 @@ double cliSetServoCalib(double i) {
 
 double cliSetServoToInit(double i) {
   HALEnabled = false;
+  isCalibrating = true;
   delay(1000); // that it terrible, but we need to wait to make sure HAL disabled
 
   setServoToInit();

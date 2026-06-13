@@ -66,5 +66,28 @@ void updateDisplay() {
   display.print(" P: ");
   display.println(IMU_DATA[PITCH], 1);
 
+  // Print Loop Time
+  extern unsigned long loopTime;
+  display.print("Loop(us): ");
+  display.println(loopTime);
+
+  // Print Calibration Mode
+  extern bool isCalibrating;
+  if (isCalibrating) {
+    display.println("MODE: CALIBRATION");
+  }
+
+  // Print recent errors
+  extern String lastError1;
+  extern String lastError2;
+  if (lastError1.length() > 0) {
+    display.print("E1: ");
+    display.println(lastError1);
+  }
+  if (lastError2.length() > 0) {
+    display.print("E2: ");
+    display.println(lastError2);
+  }
+
   display.display();
 }

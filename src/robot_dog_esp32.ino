@@ -155,6 +155,18 @@ bool subscriptionBinary = false;
 bool mainLoopReady = false;
 bool serviceLoopReady = false;
 SemaphoreHandle_t i2c_mutex;
+
+String lastError1 = "";
+String lastError2 = "";
+bool isCalibrating = false;
+
+void logError(String err) {
+  if (err == lastError1) return;
+  lastError2 = lastError1;
+  lastError1 = err;
+  Serial.println(err);
+}
+
 #include "display.cpp.inc"
 
 void setup()
@@ -211,8 +223,7 @@ void loop()
 
       loopTime = micros() - currentTime;
       if (loopTime > LOOP_TIME) {
-        Serial.print("WARNING! Increase LOOP_TIME: ");
-        Serial.println(loopTime);
+        logError("Slow Loop");
       }
     }
   } else {
@@ -279,8 +290,7 @@ void servicesLoop(void * pvParameters) {
 
       serviceFastLoopTime = micros() - serviceCurrentTime;
       if (serviceFastLoopTime > SERVICE_FAST_LOOP_TIME) {
-        Serial.print("WARNING! Increase SERVICE_FAST_LOOP_TIME: ");
-        Serial.println(serviceFastLoopTime);
+        logError("Slow SFast L");
       }      
     }
 
@@ -299,8 +309,7 @@ void servicesLoop(void * pvParameters) {
 
       serviceLoopTime = micros() - serviceCurrentTime;  // this loop + service fast loop
       if (serviceLoopTime > SERVICE_LOOP_TIME) {
-        Serial.print("WARNING! Increase SERVICE_LOOP_TIME: ");
-        Serial.println(serviceLoopTime);
+        logError("Slow SL L");
       }
 
       }
