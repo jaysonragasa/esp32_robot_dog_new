@@ -2,7 +2,9 @@
 
 ## Background
 
-This project is aimed at building a quadruped robot dog driven by an ESP32 microcontroller, utilizing a PCA9685 PWM servo driver to control its 12 joints. The project features an embedded Web UI served over WiFi to control the robot's movements remotely. 
+The whole codebase is originally based on [SovGVD/esp32-robot-dog-code](https://github.com/SovGVD/esp32-robot-dog-code), but due to severe build errors and outdated dependencies when compiling it in 2026, this repository was created to fix those issues and maintain the original code. Everything else has been modified either manually or through AI assistance.
+
+This project is aimed at building a quadruped robot dog driven by an ESP32 microcontroller, utilizing a PCA9685 PWM servo driver to control its 12 joints. The project features an embedded Web UI served over WiFi to control the robot's movements remotely.
 
 During the development and testing phase, we encountered and fixed several significant issues:
 1. **Web Build Pipeline**: The Node.js build scripts were failing due to outdated dependencies (`primordials` error). We fixed this by rewriting the pipeline to properly minify, gzip, and embed the web assets directly into a C++ header file.
