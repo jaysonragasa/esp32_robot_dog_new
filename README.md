@@ -6,6 +6,11 @@ The whole codebase is originally based on [SovGVD/esp32-robot-dog-code](https://
 
 This project is aimed at building a quadruped robot dog driven by an ESP32 microcontroller, utilizing a PCA9685 PWM servo driver to control its 12 joints. The project features an embedded Web UI served over WiFi to control the robot's movements remotely.
 
+**Hardware Architecture & Safety Overhaul**: In the original build that this codebase is based on, the ESP32 logic pins were used to directly drive all 12 servos. That approach is inherently dangerous and unstable. A single MG90S servo can draw upwards of 700mA+ under load or stall conditions, meaning 12 servos could theoretically draw over 8 Amps simultaneously! Attempting to supply or route this kind of current without proper power management will result in severe voltage drops, brownouts, erratic behavior, and can permanently fry the microcontroller. 
+
+To resolve this, our build fundamentally revamps the hardware architecture by introducing:
+1. **A dedicated 300W 20A DC-DC Buck Converter** to safely provide the massive amperage required by 12 servos moving at once.
+2. **A PCA9685 16-Channel PWM Servo Driver** to offload the PWM signal generation from the ESP32 logic pins. This ensures rock-solid signal timing and keeps the high-current servo power lines safely isolated from the sensitive microcontroller circuitry.
 During the development and testing phase, we encountered and fixed several significant issues:
 1. **Web Build Pipeline**: The Node.js build scripts were failing due to outdated dependencies (`primordials` error). We fixed this by rewriting the pipeline to properly minify, gzip, and embed the web assets directly into a C++ header file.
 2. **WebSockets**: The web interface was failing to parse incoming binary telemetry from the ESP32 due to incorrect WebSocket binary type settings.
