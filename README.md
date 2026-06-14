@@ -1,4 +1,5 @@
 # ESP32 Robot Dog
+![alt text](https://github.com/jaysonragasa/esp32_robot_dog_new/blob/main/images/20260614_181441.jpg?raw=true)
 
 ## Background
 
@@ -30,6 +31,8 @@ During the development and testing phase, we encountered and fixed several signi
 | **Power Supply** | 300W 20A DC-DC Buck Converter Step Down Module | [Shopee Link](https://shopee.ph/300W-20A-DC-DC-Buck-Converter-Step-Down-Module-Constant-Current-LED-Driver-Power-Step-Down-Voltage-Module-Electrolytic-Capacitor-i.580325202.14789230069) |
 | **Chassis** | 3D Printed Parts (96.24g, 4h 37m print time) | [Thingiverse Link](https://www.thingiverse.com/thing:4822059) |
 
+![alt text](https://github.com/jaysonragasa/esp32_robot_dog_new/blob/main/images/20260614_181546.jpg?raw=true)
+
 ## Recent Changes (June 13, 2026)
 
 - **Web Server Build Process Fix**: Replaced outdated Gulp dependencies with a custom Node.js `build.js` script to properly minify and gzip the HTML/JS web interface without `primordials` errors. Updated `npm-shrinkwrap.json` to pin `graceful-fs`. Fixed output path so the generated header is successfully embedded into the firmware.
@@ -40,3 +43,5 @@ During the development and testing phase, we encountered and fixed several signi
 - **Code Cleanups**: Fixed compilation errors in `display.cpp.inc`, `powerSensor.ino`, and `imu.ino` when `POWER_SENSOR` and `IMU_TYPE` are disabled.
 
 Please refer to `History.md` for a full breakdown of the revisions.
+
+![alt text](https://github.com/jaysonragasa/esp32_robot_dog_new/blob/main/images/20260614_182707.jpg?raw=true)
