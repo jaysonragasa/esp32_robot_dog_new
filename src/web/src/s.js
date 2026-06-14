@@ -157,6 +157,11 @@ let packet = {
 
 		return packet.pMove;
 	},
+	command: function (cmd_id) {
+		packet.vMove[0] = 80; // P_COMMAND
+		packet.vMove[1] = cmd_id;
+		return packet.pMove;
+	},
 	telemetry: function () {
 		packet.vMove[0] = 84;
 		packet.vMove[1] = 1;
@@ -244,11 +249,63 @@ class onScreenGamepad {
 };
 
 let control = {
+	danceInterval: null,
 	init() {
 		let leftJ  = new onScreenGamepad(G('leftJ'),  0.05, this.leftJcallback);
 		let rightJ = new onScreenGamepad(G('rightJ'), 0.05, this.rightJcallback);
 		leftJ.init();
 		rightJ.init();
+		this.setupButtons();
+	},
+	setupButtons() {
+		let btnConfig = [
+			{ id: 'btn_walk',     action: function(state) { 
+				if (state) ws.ws.send(packet.command(1)); // Walk ON
+				else ws.ws.send(packet.command(2));       // Walk OFF
+			} },
+			{ id: 'btn_run', action: function(state) { vector.move.y = state ? 1.0 : 0; } },
+			{ id: 'btn_back', action: function(state) { vector.move.y = state ? -0.5 : 0; } },
+			{ id: 'btn_left', action: function(state) { vector.move.x = state ? -1.0 : 0; } },
+			{ id: 'btn_right', action: function(state) { vector.move.x = state ? 1.0 : 0; } },
+			{ id: 'btn_sit', action: function(state) { vector.rotate.pitch = state ? 0.5 : 0; } },
+			{ id: 'btn_dance', action: function(state) { 
+				if (state) {
+					if (!control.danceInterval) {
+						let tick = 0;
+						control.danceInterval = setInterval(function() {
+							tick += 0.2;
+							vector.rotate.roll = Math.sin(tick) * 0.5;
+							vector.rotate.yaw = Math.cos(tick) * 0.5;
+						}, 50);
+					}
+				} else {
+					clearInterval(control.danceInterval);
+					control.danceInterval = null;
+					vector.rotate.roll = 0;
+					vector.rotate.yaw = 0;
+				}
+			} }
+		];
+
+		btnConfig.forEach(function(cfg) {
+			let btn = G(cfg.id);
+			if (!btn) return;
+			btn.isActive = false;
+			let toggle = function(e) { 
+				if (e) e.preventDefault();
+				btn.isActive = !btn.isActive;
+				btn.style.backgroundColor = btn.isActive ? '#aaddff' : '';
+				cfg.action(btn.isActive); 
+			};
+			// Listen to both click and touchstart, but prevent double firing
+			btn.addEventListener('click', function(e) {
+				toggle(e);
+			});
+			btn.addEventListener('touchstart', function(e) {
+				e.preventDefault(); // prevent mouse emulation click
+				toggle(e);
+			});
+		});
 	},
 	leftJcallback(v) {
 		vector.rotate.yaw = v.x;

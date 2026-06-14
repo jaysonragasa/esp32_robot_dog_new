@@ -58,6 +58,25 @@
 	.joystick.active {
 		opacity: 1;
 	}
+	.button-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 10px;
+		padding: 10px;
+	}
+	.button-grid button {
+		padding: 15px;
+		font-size: 16px;
+		font-weight: bold;
+		background-color: #f0f0f0;
+		border: 1px solid #ccc;
+		border-radius: 8px;
+		user-select: none;
+		touch-action: none;
+	}
+	.button-grid button:active {
+		background-color: #ddd;
+	}
 </style>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 </head>
@@ -68,6 +87,15 @@
     </div>
     <div id="modes">
 		<input type="checkbox" id="body_rotate"><label for="body_rotate">Rotate test</label>
+	</div>
+	<div id="action_buttons" class="button-grid">
+		<button id="btn_walk">Walk</button>
+		<button id="btn_run">Run</button>
+		<button id="btn_back">Backwards</button>
+		<button id="btn_left">Side Left</button>
+		<button id="btn_right">Side Right</button>
+		<button id="btn_sit">Sit</button>
+		<button id="btn_dance">Dance</button>
 	</div>
     <div id="control">
         <div class="joystick_group">

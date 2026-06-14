@@ -6,7 +6,7 @@ void initWebServer() {
 
 void initWebServerRoutes() {  
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html",  index_html_gz, index_html_gz_len);
+    AsyncWebServerResponse *response = request->beginResponse(200, "text/html",  index_html_gz, index_html_gz_len);
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);  
   });
@@ -33,6 +33,9 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
     switch(data[0]) {
       case P_MOVE:
         pMove(data);
+        break;
+      case P_COMMAND:
+        pCommand(data);
         break;
       case P_TELEMETRY:
         pTelemetry();

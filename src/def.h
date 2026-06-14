@@ -32,7 +32,8 @@
 #define P_TELEMETRY_LEN 14
 
 #define P_MOVE      77  // ASCII "M"
-#define P_TELEMETRY 84  //       "T"
+#define P_COMMAND   80  // ASCII "P"
+#define P_TELEMETRY 84  // ASCII "T"
 
 /* Debug (SLOW!!!)*/
 //#define DEBUG_HAL_LEG

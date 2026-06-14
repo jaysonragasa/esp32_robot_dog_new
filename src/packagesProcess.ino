@@ -13,6 +13,17 @@ void pMove(uint8_t* data) {
   vector.rotate.yaw   = float(bytesToInt16(data[12], data[13]))/10000-1;
 }
 
+void pCommand(uint8_t* data) {
+  uint8_t cmd = data[1];
+  if (cmd == 1) { // Walk ON
+    isGaitPlaying = true;
+    activeGaitMode = 1;
+  } else if (cmd == 2) { // Walk OFF
+    isGaitPlaying = false;
+    activeGaitMode = 0;
+  }
+}
+
 void pTelemetry() {
   /**
    * Telemetry package map

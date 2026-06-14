@@ -102,7 +102,7 @@ moveVector vector = {
 
 //Failsafe
 bool FS_FAIL = false;
-uint8_t FS_WS_count = 0;
+uint16_t FS_WS_count = 0;
 
 // HAL
 figure body = {
@@ -160,6 +160,10 @@ String lastError1 = "";
 String lastError2 = "";
 bool isCalibrating = false;
 
+// Firmware-level Gait Flags
+bool isGaitPlaying = false;
+uint8_t activeGaitMode = 0; // 1 = Walk
+
 void logError(String err) {
   if (err == lastError1) return;
   lastError2 = lastError1;
@@ -210,6 +214,13 @@ void loop()
       previousTime = currentTime;
 
       updateFailsafe();
+
+      if (isGaitPlaying) {
+        if (activeGaitMode == 1) { // Walk
+          vector.move.y = 0.5;
+        }
+      }
+
       updateGait();
       
       if (xSemaphoreTake(i2c_mutex, portMAX_DELAY)) {
@@ -240,7 +251,7 @@ void servicesSetup() {
   initCLI();
   initSubscription();
   Wire.begin();
-  Wire.setClock(100000);
+  Wire.setClock(400000); // 400kHz I2C for faster servo updates and OLED drawing
   delay(100);
 
   Serial.println("Scanning I2C bus...");
@@ -259,9 +270,6 @@ void servicesSetup() {
   if (nDevices == 0) Serial.println("No I2C devices found\n");
   else Serial.println("done\n");
 
-  initDisplay();
-  delay(100);
-
   initIMU();
   delay(100);
 
@@ -271,6 +279,9 @@ void servicesSetup() {
   initWiFi();
   delay(100);
   
+  initDisplay();
+  delay(100);
+
   initWebServer();
   delay(100);
 

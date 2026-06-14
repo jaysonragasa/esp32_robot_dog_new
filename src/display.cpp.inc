@@ -27,12 +27,30 @@ void initDisplay() {
     display.setTextColor(SSD1306_WHITE);
     display.setCursor(0, 0);
     display.println("Booting robot...");
+    
+    // Print WiFi IP
+    display.print("IP: ");
+    if (WiFiMode == AP_MODE) {
+      display.println(WiFi.softAPIP());
+    } else {
+      display.println(WiFi.localIP());
+    }
+    
     display.display();
   }
 }
 
 void updateDisplay() {
   if (!displayConnected) return;
+
+#if ENABLE_SCREEN_TELEMETRY
+  // Don't update the OLED if the robot is actively moving.
+  // The OLED I2C transfer takes ~30-100ms and locks the i2c_mutex,
+  // which blocks the main gait loop and causes massive lag/stuttering!
+  if (vector.move.x != 0 || vector.move.y != 0 || vector.move.z != 0 || 
+      vector.rotate.pitch != 0 || vector.rotate.roll != 0 || vector.rotate.yaw != 0) {
+    return;
+  }
 
   unsigned long now = millis();
   if (now - lastDisplayUpdate < 500) {
@@ -90,4 +108,5 @@ void updateDisplay() {
   }
 
   display.display();
+#endif
 }
