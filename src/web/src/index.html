@@ -58,6 +58,20 @@
 	.joystick.active {
 		opacity: 1;
 	}
+	.gait-btn {
+		padding: 10px 15px;
+		background: #444;
+		color: white;
+		border: 1px solid #666;
+		border-radius: 5px;
+		font-weight: bold;
+		flex-grow: 1;
+		text-align: center;
+	}
+	.gait-btn.active {
+		background: #4CAF50;
+		color: white;
+	}
 </style>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 </head>
@@ -69,6 +83,15 @@
     <div id="modes">
 		<input type="checkbox" id="body_rotate"><label for="body_rotate">Rotate test</label>
 	</div>
+    <div id="gait-controls" style="display:flex; flex-wrap:wrap; justify-content:center; gap:5px; margin:5px; padding: 5px;">
+        <div class="gait-btn" id="btn_walk">Walk</div>
+        <div class="gait-btn" id="btn_run">Run</div>
+        <div class="gait-btn" id="btn_sit">Sit</div>
+        <div class="gait-btn" id="btn_dance">Dance</div>
+        <div class="gait-btn" id="btn_walk_back">Walk Back</div>
+        <div class="gait-btn" id="btn_step_right">Step Right</div>
+        <div class="gait-btn" id="btn_step_left">Step Left</div>
+    </div>
     <div id="control">
         <div class="joystick_group">
             <div class="joystick" id="leftJ"></div>

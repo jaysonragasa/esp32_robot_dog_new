@@ -268,7 +268,50 @@ let control = {
 	}
 }
 
+let gaitControls = {
+	activeBtn: null,
+	init() {
+		const btns = {
+			'btn_walk': { move: { x: 0, y: 0.5, z: 0 }, rotate: { pitch: 0, roll: 0, yaw: 0 } },
+			'btn_run': { move: { x: 0, y: 1.0, z: 0 }, rotate: { pitch: 0, roll: 0, yaw: 0 } },
+			'btn_sit': { move: { x: 0, y: 0, z: -0.8 }, rotate: { pitch: 0.2, roll: 0, yaw: 0 } },
+			'btn_dance': { move: { x: 0, y: 0, z: 0 }, rotate: { pitch: 0, roll: 0, yaw: 0.5 } }, // Basic dance rotation
+			'btn_walk_back': { move: { x: 0, y: -0.5, z: 0 }, rotate: { pitch: 0, roll: 0, yaw: 0 } },
+			'btn_step_right': { move: { x: 0.5, y: 0, z: 0 }, rotate: { pitch: 0, roll: 0, yaw: 0 } },
+			'btn_step_left': { move: { x: -0.5, y: 0, z: 0 }, rotate: { pitch: 0, roll: 0, yaw: 0 } }
+		};
+
+		for (const [id, params] of Object.entries(btns)) {
+			let el = G(id);
+			if (!el) continue;
+			el.addEventListener('click', () => {
+				if (this.activeBtn === el) {
+					// Turn off
+					this.activeBtn.classList.remove('active');
+					this.activeBtn = null;
+					failsafe.setFS(); // Resets all vectors to 0
+				} else {
+					// Turn on new button
+					if (this.activeBtn) this.activeBtn.classList.remove('active');
+					this.activeBtn = el;
+					this.activeBtn.classList.add('active');
+					
+					// Apply vectors
+					vector.move.x = params.move.x;
+					vector.move.y = params.move.y;
+					vector.move.z = params.move.z;
+					vector.rotate.pitch = params.rotate.pitch;
+					vector.rotate.roll = params.rotate.roll;
+					vector.rotate.yaw = params.rotate.yaw;
+				}
+			});
+		}
+	}
+};
+
 control.init();
 gui.init();
 packet.init();
 ws.init();
+gaitControls.init();
+
