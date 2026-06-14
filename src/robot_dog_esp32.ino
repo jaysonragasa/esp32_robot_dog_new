@@ -1,35 +1,32 @@
 #include <math.h>
 
+#include "libs/IK/geometry.h"
+#include "libs/IK/leg.h"
+#include "def.h"
 #include "config.h"
 #include "config_small.h"
 #include "config_wifi.h"
-#include "def.h"
-#include "libs/HAL_body/HAL_body.h"
-#include "libs/IK/IK_simple.h" // TODO this is for small dog only!!!
-#include "libs/IK/geometry.h"
-#include "libs/IK/leg.h"
+#include "libs/IK/IK_simple.h"  // TODO this is for small dog only!!!
+#include "libs/planner/planner.h"
 #include "libs/balance/balance.h"
 #include "libs/gait/gait.h"
-#include "libs/planner/planner.h"
+#include "libs/HAL_body/HAL_body.h"
 
-
-#include "ESPAsyncWebServer.h"
+#include <EEPROM.h>
 #include "WiFi.h"
-#include "cli.h"
-#include "subscription.h"
+#include "ESPAsyncWebServer.h"
 #include "web/index.html.gz.h"
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
-#include <EEPROM.h>
 #include <Wire.h>
+#include "cli.h"
+#include "subscription.h"
 
-
-#include "libs/HAL_body/HAL_body.cpp.inc"
-#include "libs/IK/IK_simple.cpp.inc" // TODO this is for small dog only!!!
+#include "libs/IK/IK_simple.cpp.inc"  // TODO this is for small dog only!!!
+#include "libs/planner/planner.cpp.inc"
 #include "libs/balance/balance.cpp.inc"
 #include "libs/gait/gait.cpp.inc"
-#include "libs/planner/planner.cpp.inc"
-
+#include "libs/HAL_body/HAL_body.cpp.inc"
 
 /**
  * Hardware libraries
