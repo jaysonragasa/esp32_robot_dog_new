@@ -51,7 +51,7 @@
 #endif
 
 float IMU_DATA[3] = {0, 0, 0};
-#if IMU_TYPE == MPU6050
+#if defined(IMU_TYPE) && IMU_TYPE == MPU6050
 Adafruit_MPU6050 IMU;
 #endif
 
@@ -72,6 +72,7 @@ TaskHandle_t ServicesTask;
 unsigned long currentTime;
 unsigned long previousTime;
 unsigned long loopTime;
+unsigned long i2cWaitTime;
 
 unsigned long serviceCurrentTime;
 
@@ -211,9 +212,13 @@ void loop()
 
       updateFailsafe();
       updateGait();
-      
+
+      unsigned long waitStart = micros();
       if (xSemaphoreTake(i2c_mutex, portMAX_DELAY)) {
-        updateIMU();
+        i2cWaitTime = micros() - waitStart;  // time blocked waiting for the bus
+        #if defined(IMU_TYPE) && IMU_TYPE == MPU6050
+          updateIMU();   // disabled: IMU_TYPE not set in config.h
+        #endif
         updateHAL();
         doHAL();
         xSemaphoreGive(i2c_mutex);
@@ -240,7 +245,8 @@ void servicesSetup() {
   initCLI();
   initSubscription();
   Wire.begin();
-  Wire.setClock(100000);
+  Wire.setClock(400000);  // 400 kHz Fast Mode: keeps the OLED framebuffer transfer short
+                          // so it doesn't hold the I2C mutex long enough to stall the servo loop
   delay(100);
 
   Serial.println("Scanning I2C bus...");
@@ -262,11 +268,15 @@ void servicesSetup() {
   initDisplay();
   delay(100);
 
-  initIMU();
-  delay(100);
+  #if defined(IMU_TYPE) && IMU_TYPE == MPU6050
+    initIMU();
+    delay(100);
+  #endif
 
-  initPowerSensor();
-  delay(100);
+  #if defined(POWER_SENSOR) && POWER_SENSOR == INA219
+    initPowerSensor();
+    delay(100);
+  #endif
 
   initWiFi();
   delay(100);
@@ -299,7 +309,9 @@ void servicesLoop(void * pvParameters) {
 
       updateWiFi();
       if (xSemaphoreTake(i2c_mutex, portMAX_DELAY)) {
-        updatePower();
+        #if defined(POWER_SENSOR) && POWER_SENSOR == INA219
+          updatePower();   // disabled: POWER_SENSOR not set in config.h
+        #endif
         updateDisplay();
         xSemaphoreGive(i2c_mutex);
       }

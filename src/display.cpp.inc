@@ -5,7 +5,11 @@
 #define SCREEN_HEIGHT 64
 #define OLED_RESET -1
 
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET,
+                         400000,   // clkDuring: push the framebuffer at 400 kHz
+                         400000);  // clkAfter: leave the bus at 400 kHz so servo
+                                   // writes (PCA9685) stay fast too. Default would
+                                   // reset the whole bus back to 100 kHz here.
 
 bool displayConnected = false;
 unsigned long lastDisplayUpdate = 0;
@@ -54,22 +58,29 @@ void updateDisplay() {
   }
 
   // Print Power data
+  #if defined(POWER_SENSOR) && POWER_SENSOR == INA219
   display.print("V: ");
   display.print(getPowerSensorVoltage(), 2);
   display.print("V I: ");
   display.print(getPowerSensorCurrent(), 2);
   display.println("A");
+  #endif
 
   // Print IMU Roll/Pitch
+  #if defined(IMU_TYPE) && IMU_TYPE == MPU6050
   display.print("R: ");
   display.print(IMU_DATA[ROLL], 1);
   display.print(" P: ");
   display.println(IMU_DATA[PITCH], 1);
+  #endif
 
   // Print Loop Time
   extern unsigned long loopTime;
+  extern unsigned long i2cWaitTime;
   display.print("Loop(us): ");
   display.println(loopTime);
+  display.print("Wait(us): ");
+  display.println(i2cWaitTime);
 
   // Print Calibration Mode
   extern bool isCalibrating;
