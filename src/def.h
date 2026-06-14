@@ -6,7 +6,7 @@
 
 
 #define PCA9685  100
-#define MPU9650  101
+#define MPU6050  101
 #define SD1306   102
 #define ESP32PWM 103
 #define INA219   104

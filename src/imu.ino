@@ -9,7 +9,7 @@ void initIMU()
 
 void setupIMU()
 {
-  #if IMU_TYPE == MPU6050
+  #if defined(IMU_TYPE) && IMU_TYPE == MPU6050
   if(!IMU.begin(IMU_ADDRESS, &Wire)){
     Serial.println("IMU does not respond");
     imuConnected = false;
@@ -39,7 +39,7 @@ double calibrateIMU(double id)
 
 void updateIMU()
 {
-  #if IMU_TYPE == MPU6050
+  #if defined(IMU_TYPE) && IMU_TYPE == MPU6050
   if (!imuConnected) return;
   sensors_event_t a, g, temp;
   IMU.getEvent(&a, &g, &temp);
