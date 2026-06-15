@@ -94,7 +94,7 @@ let ws = {
 	},
 
 	update: function(data) {
-		if (ws.status) {
+		if (ws.status && (!window.calibControls || !window.calibControls.isCalibrating)) {
 			ws.ws.send(packet.move());
 		}
 	},
@@ -309,9 +309,119 @@ let gaitControls = {
 	}
 };
 
+window.calibControls = {
+	isCalibrating: false,
+	init() {
+		const cb = G('cb_calibrate');
+		const panel = G('calibration-panel');
+		const slidersContainer = G('calib-sliders');
+        const gaitContainer = G('gait-controls');
+        const ctrlContainer = G('control');
+
+		const legNames = ["Front Left", "Front Right", "Hind Left", "Hind Right"];
+		const jointNames = ["Alpha (Hip)", "Beta (Femur)", "Gamma (Tibia)"];
+
+		// Build sliders
+		for (let leg = 0; leg < 4; leg++) {
+			let legDiv = document.createElement('div');
+			legDiv.innerHTML = `<strong style="font-size:0.9em; display:block; margin-bottom:5px;">${legNames[leg]}</strong>`;
+			for (let joint = 0; joint < 3; joint++) {
+				let wrapper = document.createElement('div');
+				wrapper.innerHTML = `<label style="font-size:0.8em; display:inline-block; width:80px;">${jointNames[joint]}</label>
+									 <button class="calib-btn" id="calib_dec_${leg}_${joint}">-</button>
+									 <input type="range" min="-25" max="25" step="0.5" value="0" id="calib_${leg}_${joint}" style="width:calc(100% - 170px); vertical-align:middle;">
+									 <button class="calib-btn" id="calib_inc_${leg}_${joint}">+</button>
+									 <span id="calib_val_${leg}_${joint}" style="font-size:0.8em; display:inline-block; width:40px; text-align:right;">0.0&deg;</span>`;
+				legDiv.appendChild(wrapper);
+
+				setTimeout(() => {
+					let slider = G(`calib_${leg}_${joint}`);
+					let valDisplay = G(`calib_val_${leg}_${joint}`);
+					let btnDec = G(`calib_dec_${leg}_${joint}`);
+					let btnInc = G(`calib_inc_${leg}_${joint}`);
+
+					let lastFetchTime = 0;
+					const updateVal = (val) => {
+						slider.value = val;
+						valDisplay.innerText = val + '°';
+						let now = Date.now();
+						if (now - lastFetchTime > 50) { // max 20Hz
+							lastFetchTime = now;
+							fetch(`/calib?action=set&leg=${leg}&joint=${joint}&val=${val}`);
+						}
+					};
+
+					slider.addEventListener('input', (e) => {
+						updateVal(e.target.value);
+					});
+					slider.addEventListener('change', (e) => {
+						fetch(`/calib?action=set&leg=${leg}&joint=${joint}&val=${e.target.value}`);
+					});
+
+					btnDec.addEventListener('click', () => {
+						let v = parseFloat(slider.value) - 0.5;
+						updateVal(v);
+						fetch(`/calib?action=set&leg=${leg}&joint=${joint}&val=${v}`);
+					});
+					btnInc.addEventListener('click', () => {
+						let v = parseFloat(slider.value) + 0.5;
+						updateVal(v);
+						fetch(`/calib?action=set&leg=${leg}&joint=${joint}&val=${v}`);
+					});
+				}, 100);
+			}
+			slidersContainer.appendChild(legDiv);
+		}
+
+		const pwmMin = G('calib_pwm_min');
+		const pwmMax = G('calib_pwm_max');
+		const maxAngle = G('calib_max_angle');
+
+		const updatePwm = () => {
+			fetch(`/calib?action=pwm&min=${pwmMin.value}&max=${pwmMax.value}&angle=${maxAngle.value}`);
+		};
+		pwmMin.addEventListener('change', updatePwm);
+		pwmMax.addEventListener('change', updatePwm);
+		maxAngle.addEventListener('change', updatePwm);
+
+		cb.addEventListener('change', (e) => {
+			this.isCalibrating = e.target.checked;
+			if (this.isCalibrating) {
+				panel.style.display = 'flex';
+                gaitContainer.style.display = 'none';
+                ctrlContainer.style.display = 'none';
+				
+				// Fetch current values
+				fetch('/calib?action=get').then(r => r.json()).then(data => {
+					if (data.pwmMin !== undefined) pwmMin.value = data.pwmMin;
+					if (data.pwmMax !== undefined) pwmMax.value = data.pwmMax;
+					if (data.maxAngle !== undefined) maxAngle.value = data.maxAngle;
+					for (let leg = 0; leg < 4; leg++) {
+						for (let joint = 0; joint < 3; joint++) {
+							let slider = G(`calib_${leg}_${joint}`);
+							let valDisplay = G(`calib_val_${leg}_${joint}`);
+							if (slider && data[leg]) {
+								slider.value = data[leg][joint];
+								valDisplay.innerText = data[leg][joint] + '°';
+							}
+						}
+					}
+					fetch('/calib?action=start');
+				});
+			} else {
+				panel.style.display = 'none';
+                gaitContainer.style.display = 'flex';
+                ctrlContainer.style.display = 'block';
+				fetch('/calib?action=stop');
+			}
+		});
+	}
+};
+
 control.init();
 gui.init();
 packet.init();
 ws.init();
 gaitControls.init();
+window.calibControls.init();
 

@@ -58,20 +58,12 @@
 	.joystick.active {
 		opacity: 1;
 	}
-	.gait-btn {
-		padding: 10px 15px;
-		background: #444;
-		color: white;
-		border: 1px solid #666;
-		border-radius: 5px;
-		font-weight: bold;
-		flex-grow: 1;
-		text-align: center;
-	}
-	.gait-btn.active {
-		background: #4CAF50;
-		color: white;
-	}
+	.gait-btn { background:#333; color:white; border-radius:5px; padding:10px; cursor:pointer; width:80px; text-align:center; font-weight:bold; }
+    .gait-btn:hover { background:#555; }
+    .gait-btn:active { background:#777; }
+    .calib-btn { background:#ccc; border:1px solid #aaa; border-radius:3px; padding:2px 5px; cursor:pointer; font-weight:bold; }
+    .calib-btn:hover { background:#ddd; }
+    .calib-btn:active { background:#999; }
 </style>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 </head>
@@ -82,7 +74,22 @@
     </div>
     <div id="modes">
 		<input type="checkbox" id="body_rotate"><label for="body_rotate">Rotate test</label>
+        <input type="checkbox" id="cb_calibrate"><label for="cb_calibrate" style="color:red; font-weight:bold;">Calibrate Mode</label>
 	</div>
+    <div id="calibration-panel" style="display:none; flex-direction:column; padding: 10px; overflow-y: auto; background: #eee; border: 1px solid #ccc; margin: 5px;">
+        <h3 style="margin:0 0 5px 0;">Servo Calibration</h3>
+        <p style="margin:0 0 10px 0; font-size:0.9em; color:#555;">Adjust sliders to make all joints physically 90&deg;. Saves automatically to EEPROM.</p>
+        <div style="margin-bottom:15px; padding:10px; background:#fff; border:1px solid #ddd;">
+            <strong style="display:block; margin-bottom:5px;">Global PWM Scaling</strong>
+            <label style="font-size:0.8em; margin-right:5px;">Min (0&deg;) us:</label>
+            <input type="number" id="calib_pwm_min" value="600" style="width:70px; margin-right:10px;">
+            <label style="font-size:0.8em; margin-right:5px;">Max us:</label>
+            <input type="number" id="calib_pwm_max" value="2400" style="width:70px; margin-right:10px;">
+            <label style="font-size:0.8em; margin-right:5px;">Max &deg;:</label>
+            <input type="number" id="calib_max_angle" value="180" style="width:70px;">
+        </div>
+        <div id="calib-sliders" style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+    </div>
     <div id="gait-controls" style="display:flex; flex-wrap:wrap; justify-content:center; gap:5px; margin:5px; padding: 5px;">
         <div class="gait-btn" id="btn_walk">Walk</div>
         <div class="gait-btn" id="btn_run">Run</div>

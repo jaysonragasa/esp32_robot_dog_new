@@ -1,6 +1,9 @@
 #if PWM_CONTROLLER_TYPE == PCA9685
 
 double pwmTicksPerUs = 0;
+uint16_t activeServoMin = SERVO_MIN;
+uint16_t activeServoMax = SERVO_MAX;
+double activeMaxAngleRad = M_PI;
 
 void initServoHAL() {
   pwm = Adafruit_PWMServoDriver();
@@ -18,8 +21,8 @@ void initServoHAL() {
 }
 
 uint16_t angleToPulse(double angleRad) {
-  // Map angle expected between 0 and PI to pulse width in microseconds
-  double pulse_us = mapf(angleRad, 0, M_PI, SERVO_MIN, SERVO_MAX);
+  // Map angle expected between 0 and activeMaxAngleRad to pulse width in microseconds
+  double pulse_us = mapf(angleRad, 0, activeMaxAngleRad, activeServoMin, activeServoMax);
   return pulse_us * pwmTicksPerUs;
 }
 

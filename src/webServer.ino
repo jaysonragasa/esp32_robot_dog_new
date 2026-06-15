@@ -1,3 +1,7 @@
+extern uint16_t activeServoMin;
+extern uint16_t activeServoMax;
+extern double activeMaxAngleRad;
+
 void initWebServer() {
   Serial.print("WebServer ");
   initWebServerRoutes();
@@ -14,6 +18,68 @@ void initWebServerRoutes() {
   // Dinamic config
   server.on("/c.js", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(200, "application/x-javascript", "var c={w:'ws://" + WiFiIP.toString() + "/ws'}");
+  });
+
+  server.on("/calib", HTTP_GET, [](AsyncWebServerRequest *request){
+    if (request->hasParam("action")) {
+      String action = request->getParam("action")->value();
+      if (action == "start") {
+        HALEnabled = false;
+        isCalibrating = true;
+        setServoToCalibrate();
+        request->send(200, "text/plain", "Calib started");
+      } else if (action == "stop") {
+        HALEnabled = true;
+        isCalibrating = false;
+        request->send(200, "text/plain", "Calib stopped");
+      } else if (action == "set") {
+        if (request->hasParam("leg") && request->hasParam("joint") && request->hasParam("val")) {
+          int legId = request->getParam("leg")->value().toInt();
+          int jointId = request->getParam("joint")->value().toInt();
+          double val = request->getParam("val")->value().toDouble();
+          if (legId >= 0 && legId < 4 && jointId >= 0 && jointId < 3) {
+            setHALTrim(legs[legId], jointId, val);
+            setLegPWM(legs[legId]); // Update immediately
+            request->send(200, "text/plain", "Set OK");
+          } else {
+            request->send(400, "text/plain", "Invalid params");
+          }
+        } else {
+          request->send(400, "text/plain", "Missing params");
+        }
+      } else if (action == "pwm") {
+        if (request->hasParam("min") && request->hasParam("max") && request->hasParam("angle")) {
+          activeServoMin = request->getParam("min")->value().toInt();
+          activeServoMax = request->getParam("max")->value().toInt();
+          activeMaxAngleRad = degToRad(request->getParam("angle")->value().toDouble());
+          if (isCalibrating) {
+            setServoToCalibrate(); // refresh pulse widths immediately
+          }
+          request->send(200, "text/plain", "PWM updated");
+        } else {
+          request->send(400, "text/plain", "Missing min/max/angle");
+        }
+      } else if (action == "get") {
+        String json = "{";
+        json += "\"pwmMin\":" + String(activeServoMin) + ",";
+        json += "\"pwmMax\":" + String(activeServoMax) + ",";
+        json += "\"maxAngle\":" + String(radToDeg(activeMaxAngleRad)) + ",";
+        for (int i = 0; i < LEG_NUM; i++) {
+          json += "\"" + String(i) + "\":[";
+          json += String(radToDeg(getHALTrim(legs[i], ALPHA)), 2) + ",";
+          json += String(radToDeg(getHALTrim(legs[i], BETA)), 2) + ",";
+          json += String(radToDeg(getHALTrim(legs[i], GAMMA)), 2);
+          json += "]";
+          if (i < LEG_NUM - 1) json += ",";
+        }
+        json += "}";
+        request->send(200, "application/json", json);
+      } else {
+        request->send(400, "text/plain", "Unknown action");
+      }
+    } else {
+      request->send(400, "text/plain", "Missing action");
+    }
   });
 
   ws.onEvent(onWsEvent);
