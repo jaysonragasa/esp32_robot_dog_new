@@ -1,111 +1,219 @@
-<html>
+<!DOCTYPE html>
+<html lang="en" class="dark">
 <head>
-<title>RobotDogV1</title>
-<style>
-	body{
-		-webkit-touch-callout: none;
-		-webkit-user-select: none;
-		-khtml-user-select: none;
-		-moz-user-select: none;
-		-ms-user-select: none;
-		user-select: none;
-		overscroll-behavior: none;
-		padding: 0;
-		margin: 0;
-		height: 100%;
-		width: 100%;
-	}
-	.container {
-		height: 100%;
-		display: flex;
-		flex-direction: column;
-	}
-	#status {
-		font-family: monospace;
-	}
-	#control {
-		flex: 1;
-	}
-	@media screen and (orientation:portrait) {
-		.joystick_group {
-			display: flex;
-			height: 100%;
-			flex-direction: column;
-		}
-	}
-	
-	@media screen and (orientation:landscape) {
-		.joystick_group {
-			display: flex;
-			height: 100%;
-		}
-	}
-	.joystick_container {
-		flex:50%;
-		height: 100%;
-	}
-	.joystick {
-		width: 100%;
-		height: 100%;
-		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='100' width='100'%3E%3Ccircle cx='50' cy='50' r='45' stroke='black' stroke-width='3' fill='lightgreen' /%3E%3C/svg%3E");
-		background-repeat: no-repeat;
-		background-position: 50% 50%;
-		overscroll-behavior: none;
-		float: left;
-		opacity: 0.1;
-		transition: opacity 0.5s;
-	}
-	.joystick.active {
-		opacity: 1;
-	}
-	.gait-btn { background:#333; color:white; border-radius:5px; padding:10px; cursor:pointer; width:80px; text-align:center; font-weight:bold; }
-    .gait-btn:hover { background:#555; }
-    .gait-btn:active { background:#777; }
-    .calib-btn { background:#ccc; border:1px solid #aaa; border-radius:3px; padding:2px 5px; cursor:pointer; font-weight:bold; }
-    .calib-btn:hover { background:#ddd; }
-    .calib-btn:active { background:#999; }
-</style>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>RobotDogV1 - Dashboard</title>
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+        darkMode: 'class',
+        theme: {
+            extend: {
+                colors: {
+                    slate: {
+                        850: '#151e2e',
+                        900: '#0f172a',
+                    },
+                    accent: '#3b82f6',
+                },
+                fontFamily: {
+                    sans: ['Inter', 'sans-serif'],
+                }
+            }
+        }
+    }
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    body {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+        overscroll-behavior: none;
+        background-color: #0f172a;
+        color: #e2e8f0;
+        font-family: 'Inter', sans-serif;
+    }
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    /* Hide scrollbar for IE, Edge and Firefox */
+    .no-scrollbar {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+    }
+
+    .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .joystick {
+        width: 100%;
+        height: 100%;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='100' width='100'%3E%3Ccircle cx='50' cy='50' r='45' stroke='rgba(59, 130, 246, 0.5)' stroke-width='3' fill='rgba(59, 130, 246, 0.2)' /%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: 50% 50%;
+        opacity: 0.3;
+        transition: opacity 0.3s ease, transform 0.2s ease;
+    }
+    .joystick.active {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+
+    .gait-btn {
+        @apply bg-slate-800 text-slate-300 font-medium py-3 px-4 rounded-xl border border-slate-700 shadow-sm transition-all duration-200 flex-grow text-center cursor-pointer;
+    }
+    .gait-btn:active {
+        @apply bg-accent text-white border-blue-500 scale-95 shadow-inner;
+    }
+    .gait-btn.active {
+        @apply bg-accent text-white border-blue-500 shadow-md shadow-blue-500/20;
+    }
+
+    /* Range slider custom styling */
+    input[type=range] {
+        -webkit-appearance: none;
+        width: 100%;
+        background: transparent;
+    }
+    input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 16px;
+        width: 16px;
+        border-radius: 50%;
+        background: #3b82f6;
+        cursor: pointer;
+        margin-top: -6px;
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 4px;
+        cursor: pointer;
+        background: #334155;
+        border-radius: 2px;
+    }
+</style>
 </head>
-<body>
-<div class="container">
-    <div id="status">
-        Status line
-    </div>
-    <div id="modes">
-		<input type="checkbox" id="body_rotate"><label for="body_rotate">Rotate test</label>
-        <input type="checkbox" id="cb_calibrate"><label for="cb_calibrate" style="color:red; font-weight:bold;">Calibrate Mode</label>
-	</div>
-    <div id="calibration-panel" style="display:none; flex-direction:column; padding: 10px; overflow-y: auto; background: #eee; border: 1px solid #ccc; margin: 5px;">
-        <h3 style="margin:0 0 5px 0;">Servo Calibration</h3>
-        <p style="margin:0 0 10px 0; font-size:0.9em; color:#555;">Adjust sliders to make all joints physically 90&deg;. Saves automatically to EEPROM.</p>
-        <div style="margin-bottom:15px; padding:10px; background:#fff; border:1px solid #ddd;">
-            <strong style="display:block; margin-bottom:5px;">Global PWM Scaling</strong>
-            <label style="font-size:0.8em; margin-right:5px;">Min (0&deg;) us:</label>
-            <input type="number" id="calib_pwm_min" value="600" style="width:70px; margin-right:10px;">
-            <label style="font-size:0.8em; margin-right:5px;">Max us:</label>
-            <input type="number" id="calib_pwm_max" value="2400" style="width:70px; margin-right:10px;">
-            <label style="font-size:0.8em; margin-right:5px;">Max &deg;:</label>
-            <input type="number" id="calib_max_angle" value="180" style="width:70px;">
+<body class="h-screen w-screen flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <header class="glass-panel px-4 py-3 flex justify-between items-center z-10">
+        <div class="flex items-center gap-3">
+            <div class="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]" id="status-dot"></div>
+            <h1 class="text-lg font-semibold tracking-wide text-white">RobotDog<span class="text-accent">OS</span></h1>
         </div>
-        <div id="calib-sliders" style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
-    </div>
-    <div id="gait-controls" style="display:flex; flex-wrap:wrap; justify-content:center; gap:5px; margin:5px; padding: 5px;">
-        <div class="gait-btn" id="btn_walk">Walk</div>
-        <div class="gait-btn" id="btn_run">Run</div>
-        <div class="gait-btn" id="btn_sit">Sit</div>
-        <div class="gait-btn" id="btn_dance">Dance</div>
-        <div class="gait-btn" id="btn_walk_back">Walk Back</div>
-        <div class="gait-btn" id="btn_step_right">Step Right</div>
-        <div class="gait-btn" id="btn_step_left">Step Left</div>
-    </div>
-    <div id="control">
-        <div class="joystick_group">
-            <div class="joystick" id="leftJ"></div>
-            <div class="joystick" id="rightJ"></div>
+        <div id="status" class="text-xs text-slate-400 font-mono">Connecting...</div>
+    </header>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col relative">
+
+        <!-- Top Controls (Modes) -->
+        <div class="px-4 py-3 flex flex-wrap gap-4 items-center justify-center bg-slate-900/50 z-10">
+            <label class="flex items-center gap-2 cursor-pointer group">
+                <div class="relative">
+                    <input type="checkbox" id="body_rotate" class="sr-only peer">
+                    <div class="w-10 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-accent"></div>
+                </div>
+                <span class="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">Rotate Test</span>
+            </label>
+            
+            <label class="flex items-center gap-2 cursor-pointer group">
+                <div class="relative">
+                    <input type="checkbox" id="cb_calibrate" class="sr-only peer">
+                    <div class="w-10 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500"></div>
+                </div>
+                <span class="text-sm font-medium text-red-400 group-hover:text-red-300 transition-colors">Calibrate Mode</span>
+            </label>
         </div>
+
+        <!-- Calibration Overlay Panel -->
+        <div id="calibration-panel" class="absolute inset-0 z-20 glass-panel bg-slate-900/95 flex-col p-4 overflow-y-auto no-scrollbar hidden">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        Servo Calibration
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Adjust limits & trim to perfectly square legs at 90&deg;</p>
+                </div>
+                
+                <!-- Import/Export & Close Actions -->
+                <div class="flex gap-2 items-center">
+                    <button id="btn_export_calib" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-sm font-medium rounded-lg border border-slate-700 transition-colors text-blue-400 flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Export JSON
+                    </button>
+                    <label class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-sm font-medium rounded-lg border border-slate-700 transition-colors text-purple-400 cursor-pointer flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        Import JSON
+                        <input type="file" id="btn_import_calib" accept=".json" class="hidden">
+                    </label>
+                    <button id="btn_close_calib" class="ml-2 px-3 py-1.5 bg-red-900/50 hover:bg-red-800/80 text-sm font-bold rounded-lg border border-red-700 transition-colors text-red-200">
+                        Close
+                    </button>
+                </div>
+            </div>
+
+            <!-- Global Limits -->
+            <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-4 mb-5 shadow-lg">
+                <h3 class="text-sm font-semibold text-slate-200 mb-3 uppercase tracking-wider">Global PWM Mapping</h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Min (0&deg;) us</label>
+                        <input type="number" id="calib_pwm_min" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors" value="600">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Max us</label>
+                        <input type="number" id="calib_pwm_max" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors" value="2400">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Max &deg; Angle</label>
+                        <input type="number" id="calib_max_angle" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors" value="180">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leg Trims -->
+            <div id="calib-sliders" class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-20"></div>
+        </div>
+
+        <!-- Gait Controls -->
+        <div id="gait-controls" class="px-4 py-2 flex flex-wrap justify-center gap-2 z-10">
+            <div class="gait-btn" id="btn_walk">Walk</div>
+            <div class="gait-btn" id="btn_run">Run</div>
+            <div class="gait-btn" id="btn_sit">Sit</div>
+            <div class="gait-btn" id="btn_dance">Dance</div>
+            <div class="gait-btn" id="btn_walk_back">Reverse</div>
+            <div class="gait-btn" id="btn_step_right">Right</div>
+            <div class="gait-btn" id="btn_step_left">Left</div>
+        </div>
+
+        <!-- Joysticks -->
+        <div id="control" class="flex-1 flex flex-col sm:flex-row relative z-0">
+            <div class="flex-1 relative p-4">
+                <div class="joystick rounded-3xl" id="leftJ"></div>
+                <div class="absolute inset-0 pointer-events-none flex items-center justify-center text-slate-600/50 font-bold uppercase tracking-widest text-xl">Translate</div>
+            </div>
+            <div class="flex-1 relative p-4">
+                <div class="joystick rounded-3xl" id="rightJ"></div>
+                <div class="absolute inset-0 pointer-events-none flex items-center justify-center text-slate-600/50 font-bold uppercase tracking-widest text-xl">Rotate</div>
+            </div>
+        </div>
+
     </div>
-</div>
+
 <script src="c.js"></script>
 <script src="s.js"></script>
 </body>

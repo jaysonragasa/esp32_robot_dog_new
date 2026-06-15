@@ -214,8 +214,11 @@ class onScreenGamepad {
 	
 	eventMove(isTouch, event) {
 		let sendEvent = false;
-		let x = ((isTouch ? event.targetTouches[0].clientX : event.clientX) - event.target.offsetLeft) / this.obj.offsetWidth*2-1;
-		let y = ((isTouch ? event.targetTouches[0].clientY : event.clientY) - event.target.offsetTop) / this.obj.offsetHeight*2-1;
+		let rect = this.obj.getBoundingClientRect();
+		let clientX = isTouch ? event.targetTouches[0].clientX : event.clientX;
+		let clientY = isTouch ? event.targetTouches[0].clientY : event.clientY;
+		let x = (clientX - rect.left) / rect.width * 2 - 1;
+		let y = (clientY - rect.top) / rect.height * 2 - 1;
 		if (Math.abs(x) <= this.deadband) x = 0;
 		if (Math.abs(y) <= this.deadband) y = 0;
 		if (x > 1) x = 1;
@@ -254,9 +257,6 @@ let control = {
 		vector.rotate.yaw = v.x;
 	},
 	rightJcallback(v) {
-		/**
-		 * Body rotation, this is temporary to easy validate IK
-		 */
 		if (gui.obj.body_rotate.checked) {
 			vector.rotate.roll  = v.y;
 			vector.rotate.pitch = v.x;
@@ -315,8 +315,6 @@ window.calibControls = {
 		const cb = G('cb_calibrate');
 		const panel = G('calibration-panel');
 		const slidersContainer = G('calib-sliders');
-        const gaitContainer = G('gait-controls');
-        const ctrlContainer = G('control');
 
 		const legNames = ["Front Left", "Front Right", "Hind Left", "Hind Right"];
 		const jointNames = ["Alpha (Hip)", "Beta (Femur)", "Gamma (Tibia)"];
@@ -324,14 +322,16 @@ window.calibControls = {
 		// Build sliders
 		for (let leg = 0; leg < 4; leg++) {
 			let legDiv = document.createElement('div');
-			legDiv.innerHTML = `<strong style="font-size:0.9em; display:block; margin-bottom:5px;">${legNames[leg]}</strong>`;
+			legDiv.className = 'bg-slate-800/80 border border-slate-700 rounded-xl p-4 shadow-lg';
+			legDiv.innerHTML = `<strong class="text-sm font-semibold text-slate-200 mb-4 block border-b border-slate-700 pb-2">${legNames[leg]}</strong>`;
 			for (let joint = 0; joint < 3; joint++) {
 				let wrapper = document.createElement('div');
-				wrapper.innerHTML = `<label style="font-size:0.8em; display:inline-block; width:80px;">${jointNames[joint]}</label>
-									 <button class="calib-btn" id="calib_dec_${leg}_${joint}">-</button>
-									 <input type="range" min="-25" max="25" step="0.5" value="0" id="calib_${leg}_${joint}" style="width:calc(100% - 170px); vertical-align:middle;">
-									 <button class="calib-btn" id="calib_inc_${leg}_${joint}">+</button>
-									 <span id="calib_val_${leg}_${joint}" style="font-size:0.8em; display:inline-block; width:40px; text-align:right;">0.0&deg;</span>`;
+				wrapper.className = 'flex items-center gap-2 mb-3 last:mb-0';
+				wrapper.innerHTML = `<label class="text-xs font-medium text-slate-400 w-24 truncate">${jointNames[joint]}</label>
+									 <button class="w-8 h-8 rounded bg-slate-700 hover:bg-slate-600 active:bg-accent text-white flex items-center justify-center transition-colors" id="calib_dec_${leg}_${joint}">-</button>
+									 <input type="range" min="-25" max="25" step="0.5" value="0" id="calib_${leg}_${joint}" class="flex-1">
+									 <button class="w-8 h-8 rounded bg-slate-700 hover:bg-slate-600 active:bg-accent text-white flex items-center justify-center transition-colors" id="calib_inc_${leg}_${joint}">+</button>
+									 <span id="calib_val_${leg}_${joint}" class="text-xs font-mono text-slate-300 w-12 text-right">0.0&deg;</span>`;
 				legDiv.appendChild(wrapper);
 
 				setTimeout(() => {
@@ -341,34 +341,46 @@ window.calibControls = {
 					let btnInc = G(`calib_inc_${leg}_${joint}`);
 
 					let lastFetchTime = 0;
-					const updateVal = (val) => {
-						slider.value = val;
-						valDisplay.innerText = val + '°';
-						let now = Date.now();
-						if (now - lastFetchTime > 50) { // max 20Hz
-							lastFetchTime = now;
-							fetch(`/calib?action=set&leg=${leg}&joint=${joint}&val=${val}`);
+					let fetchTimer = null;
+					
+					const sendVal = (val) => {
+						valDisplay.innerText = Number(val).toFixed(1) + '°';
+						
+						const execute = () => {
+							fetch(`/calib?action=set&leg=${leg}&joint=${joint}&val=${slider.value}`);
+							lastFetchTime = Date.now();
+						};
+
+						const now = Date.now();
+						if (now - lastFetchTime > 50) {
+							if (fetchTimer) { clearTimeout(fetchTimer); fetchTimer = null; }
+							execute();
+						} else {
+							if (fetchTimer) clearTimeout(fetchTimer);
+							fetchTimer = setTimeout(execute, 50 - (now - lastFetchTime));
 						}
 					};
 
 					slider.addEventListener('input', (e) => {
-						updateVal(e.target.value);
-					});
-					slider.addEventListener('change', (e) => {
-						fetch(`/calib?action=set&leg=${leg}&joint=${joint}&val=${e.target.value}`);
+						sendVal(e.target.value);
 					});
 
 					btnDec.addEventListener('click', () => {
-						let v = parseFloat(slider.value) - 0.5;
-						updateVal(v);
-						fetch(`/calib?action=set&leg=${leg}&joint=${joint}&val=${v}`);
+						let newVal = parseFloat(slider.value) - 0.5;
+						if (newVal >= parseFloat(slider.min)) {
+							slider.value = newVal;
+							sendVal(newVal);
+						}
 					});
+
 					btnInc.addEventListener('click', () => {
-						let v = parseFloat(slider.value) + 0.5;
-						updateVal(v);
-						fetch(`/calib?action=set&leg=${leg}&joint=${joint}&val=${v}`);
+						let newVal = parseFloat(slider.value) + 0.5;
+						if (newVal <= parseFloat(slider.max)) {
+							slider.value = newVal;
+							sendVal(newVal);
+						}
 					});
-				}, 100);
+				}, 10);
 			}
 			slidersContainer.appendChild(legDiv);
 		}
@@ -384,12 +396,61 @@ window.calibControls = {
 		pwmMax.addEventListener('change', updatePwm);
 		maxAngle.addEventListener('change', updatePwm);
 
+        // Import/Export logic
+        const btnExport = G('btn_export_calib');
+        const fileImport = G('btn_import_calib');
+
+        btnExport.addEventListener('click', () => {
+            fetch('/calib?action=get').then(r => r.json()).then(data => {
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'robot_dog_calibration.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        });
+
+        fileImport.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                try {
+                    const data = JSON.parse(evt.target.result);
+                    if (data.pwmMin !== undefined) pwmMin.value = data.pwmMin;
+                    if (data.pwmMax !== undefined) pwmMax.value = data.pwmMax;
+                    if (data.maxAngle !== undefined) maxAngle.value = data.maxAngle;
+                    updatePwm(); // push PWM limits
+
+                    for (let leg = 0; leg < 4; leg++) {
+                        for (let joint = 0; joint < 3; joint++) {
+                            if (data[leg] && data[leg][joint] !== undefined) {
+                                let slider = G(`calib_${leg}_${joint}`);
+                                let valDisplay = G(`calib_val_${leg}_${joint}`);
+                                if (slider) {
+                                    slider.value = data[leg][joint];
+                                    valDisplay.innerText = Number(slider.value).toFixed(1) + '°';
+                                    fetch(`/calib?action=set&leg=${leg}&joint=${joint}&val=${slider.value}`);
+                                }
+                            }
+                        }
+                    }
+                } catch (err) {
+                    alert('Invalid JSON file');
+                }
+            };
+            reader.readAsText(file);
+        });
+
 		cb.addEventListener('change', (e) => {
 			this.isCalibrating = e.target.checked;
 			if (this.isCalibrating) {
-				panel.style.display = 'flex';
-                gaitContainer.style.display = 'none';
-                ctrlContainer.style.display = 'none';
+				panel.classList.remove('hidden');
+                panel.classList.add('flex');
 				
 				// Fetch current values
 				fetch('/calib?action=get').then(r => r.json()).then(data => {
@@ -409,12 +470,20 @@ window.calibControls = {
 					fetch('/calib?action=start');
 				});
 			} else {
-				panel.style.display = 'none';
-                gaitContainer.style.display = 'flex';
-                ctrlContainer.style.display = 'block';
+				panel.classList.add('hidden');
+                panel.classList.remove('flex');
 				fetch('/calib?action=stop');
 			}
 		});
+
+        const btnClose = G('btn_close_calib');
+        if (btnClose) {
+            btnClose.addEventListener('click', () => {
+                cb.checked = false;
+                // Dispatch change event to trigger the cb listener above
+                cb.dispatchEvent(new Event('change'));
+            });
+        }
 	}
 };
 
@@ -424,4 +493,3 @@ packet.init();
 ws.init();
 gaitControls.init();
 window.calibControls.init();
-
